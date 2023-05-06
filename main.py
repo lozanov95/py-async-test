@@ -4,11 +4,11 @@ import time
 import asyncio
 
 
-def bench(fn):
+def bench_sync(fn):
     def inner(*args, **kwargs):
         start = time.perf_counter()
         res = fn(*args, **kwargs)
-        print(f"func[{fn.__name__}] took {time.perf_counter() - start}")
+        print(f"func[{fn.__name__}] took {time.perf_counter() - start:.3f}s")
         return res
 
     return inner
@@ -18,7 +18,7 @@ def bench_async(fn):
     async def inner(*args, **kwargs):
         start = time.perf_counter()
         res = await fn(*args, **kwargs)
-        print(f"func[{fn.__name__}] took {time.perf_counter() - start}")
+        print(f"func[{fn.__name__}] took {time.perf_counter() - start:.3f}s")
         return res
 
     return inner
@@ -44,23 +44,15 @@ class TestAsync:
             ]
         )
 
-    @bench
-    def main(self):
-        results = [self.run_test_py() for _ in range(self.N)]
-        print(results)
-
-    async def run_subprocess_async(self, args: List[str]):
-        output = subprocess.run(
-            args=args,
-            capture_output=True,
-        )
-
-        return output.stdout.decode()
-
     async def run_test_py_async(self):
         return await asyncio.to_thread(
             self.run_subprocess, args=["python", "delayme.py"]
         )
+
+    @bench_sync
+    def main_sync(self):
+        results = [self.run_test_py() for _ in range(self.N)]
+        print(results)
 
     @bench_async
     async def main_async(self):
@@ -72,4 +64,4 @@ class TestAsync:
 
 if __name__ == "__main__":
     asyncio.run(TestAsync().main_async())
-    TestAsync().main()
+    TestAsync().main_sync()
